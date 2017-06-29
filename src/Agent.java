@@ -1,7 +1,7 @@
 
 
 public class Agent implements Comparable<Node>{
-	private int id;
+
 	private Node source;
 	private Node sink;
 	private double x;
@@ -9,11 +9,9 @@ public class Agent implements Comparable<Node>{
 	private double velocity;
 	private double simPosX =0;
 	private double simPosY =0;
-	public Node previos;
 	public double minDistance = Double.POSITIVE_INFINITY;
 	
-	public Agent(int id, Node source, Node sink){
-		this.id = id;
+	public Agent( Node source, Node sink){
 		this.x = source.getX();
 		this.y = source.getY();
 		this.source = source;
@@ -67,14 +65,6 @@ public class Agent implements Comparable<Node>{
     {
         return Double.compare(minDistance, other.minDistance);
     }
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
 
 	public Node getSource() {
 		return source;

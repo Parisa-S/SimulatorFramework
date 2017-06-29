@@ -12,6 +12,7 @@ public class Node implements Comparable<Node>{
 	private List<Node> neighbors;
 	public Node previos;
 	public double minDistance = Double.POSITIVE_INFINITY;
+	private double rateOfArrival=0.00;
 	
 	public Node(String name,double x,double y){
 		this.name = name;
@@ -53,5 +54,11 @@ public class Node implements Comparable<Node>{
     {
         return Double.compare(minDistance, other.minDistance);
     }
+	public double getRateOfArrival() {
+		return rateOfArrival;
+	}
+	public void setRateOfArrival(double rateOfArrival) {
+		this.rateOfArrival = rateOfArrival;
+	}
 	
 }

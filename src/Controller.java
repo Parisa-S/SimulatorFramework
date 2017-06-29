@@ -11,11 +11,9 @@ import java.util.PriorityQueue;
 
 public class Controller {
 	private  List<Node> nodes = new ArrayList<Node>();
-	private  Network network;
 	private List<Node> path = new ArrayList<Node>();
-	private Agent agent;
 	private double intervalTime = 0.01;
-	public double time = 0;
+	private double time =0;
 	
 	public Controller(List<Node> nodes2){
 		this.nodes = nodes2;
@@ -73,7 +71,7 @@ public class Controller {
 		return (int) (time/intervalTime);
 	}
 	
-	public List<String> calculateTrajectory(List<Node> path,Agent agent){
+	public List<String> calculateTrajectory(double time,List<Node> path,Agent agent){
 		List<String> result = new ArrayList<String>();
 		
 		for(int i=0;i<=path.size()-2;i++){
@@ -112,38 +110,5 @@ public class Controller {
 	public void setTime(double time) {
 		this.time = time;
 	}
-	
-//	public List<String> CalculateTrajectory(List<Node> path){
-//	List<String> result = new ArrayList<String>();
-//	for(int i =0; i<path.size()-2;i++){
-//		double distance = double.valueOf(agent.getVelocity().doubleValue()*intervalTime.doubleValue());
-//		while(!(path.get(i).getX()==path.get(i+1).getX()&&path.get(i).getY()==path.get(i+1).getY())){
-//			time = double.valueOf(time.doubleValue() + intervalTime.doubleValue());
-//			if(path.get(i).getX()-path.get(i+1).getX()>0&&path.get(i).getY()==path.get(i+1).getY()){
-//				path.get(i).setX(path.get(i).getX()-distance);
-//			}
-//			else if(path.get(i).getX()-path.get(i+1).getX()<0&&path.get(i).getY()==path.get(i+1).getY()){
-//				path.get(i).setX(path.get(i).getX()+distance);
-//			}
-//			else if(path.get(i).getY()-path.get(i+1).getY()>0&&path.get(i).getX()==path.get(i+1).getX()){
-//				path.get(i).setY(path.get(i).getY()-distance);
-//			}
-//			else {
-//				path.get(i).setX(path.get(i).getX()+distance);
-//			}
-//			result.add(time+" "+path.get(i).getX()+" "+path.get(i).getY());
-//		}
-//	}
-//	return result;
-//}
-	
-//	public static double toDecimal(double num){
-//		int decimal = 4;
-//		double bd = new double(num);
-//		
-//		bd.setScale(decimal, double.ROUND_HALF_UP);
-//		
-//		return bd;
-//	}
 	
 }

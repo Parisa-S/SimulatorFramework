@@ -7,10 +7,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+
+
 
 
 
@@ -30,60 +33,16 @@ public class Main {
 	private static final String fileName = "config.txt";
 	private static int count=0;
 	
-	
-	@SuppressWarnings("deprecation")
+
 	public static void main(String[] args) throws IOException {
-//		Scanner sc = new Scanner(System.in);
 		nodes = new ArrayList<Node>();
-//		
-//		System.out.println("Input number of node ");
-//		int numNode = Integer.parseInt(sc.nextLine());
-//		for(int i =1;i<= numNode;i++){
-//			System.out.print("Node : "+ i+ "\n");
-//			System.out.print("Please Input Name : ");
-//			int name = Integer.parseInt(sc.nextLine());
-//			System.out.print("Please Input X : ");
-//			double x1 = Double.parseDouble(sc.nextLine());
-//			System.out.print("Please Input Y : ");
-//			double y1 = Double.parseDouble(sc.nextLine());	
-//			Node n = new Node(name+"",x1,y1);
-//			nodes.add(n);
-//		}
-//		System.out.println("Input number of edge ");
-//		int numEdge = Integer.parseInt(sc.nextLine());
-//		for(int i =1;i<= numEdge;i++){
-//			System.out.print("Edge : "+ i+ "\n");
-//			
-//			System.out.print("Please Input source : ");
-//			int source = Integer.parseInt(sc.nextLine());
-//			System.out.print("Please Input sink : ");
-//			int sink = Integer.parseInt(sc.nextLine());
-//			nodes.get(source-1).addNeighbor(nodes.get(sink-1));
-//			nodes.get(sink-1).addNeighbor(nodes.get(source-1));
-//		}
-//		Network network = new Network(nodes);
 		
-		//read file from json and create node 
-//		JSONParser parser = new JSONParser();
-//		Object obj = parser.parse(new FileReader("config.json"));
-//		JSONObject jsonObject = (JSONObject) obj;
-//		JSONArray jsonarraynode = (JSONArray)jsonObject.get("node");
-//		Iterator<JSONObject> iteratornode = ((List<JSONObject>) jsonarraynode).iterator();
-//        while (iteratornode.hasNext()) {
-//        	JSONObject i = iteratornode.next();
-//        	String name = (String)i.get("name");
-//        	double x = Double.parseDouble((String) i.get("x"));
-//        	double y = Double.parseDouble((String)i.get("y"));
-//        	Node node = new Node(name,x,y);
-//            nodes.add(node);
-//        }
-       
 		//read file 
-		
 		FileReader fr = new FileReader(fileName);
 		BufferedReader br = new BufferedReader(fr);
 		List<String> lines = new ArrayList<String>();
 		String currentLine = null;
+		Map<String,Double> rateOfArrivals = new HashMap<String,Double>();
 		
 		while((currentLine = br.readLine()) != null){
 			if(!currentLine.startsWith("#")|| currentLine.trim().isEmpty()){
@@ -137,8 +96,6 @@ public class Main {
 			boolean existstart = false;
 			boolean existend = false;
 			try{
-					//nodes.get(nodes.indexOf(arr[0])).addNeighbor(nodes.get(nodes.indexOf(arr[1])));
-					//nodes.get(nodes.indexOf(arr[1])).addNeighbor(nodes.get(nodes.indexOf(arr[0])));
 				for(Node n: nodes){
 					if(n.getName().equals(arr[0])){
 						existstart = true;
@@ -170,32 +127,34 @@ public class Main {
 			return;
 		}
 		double agentVelo = Double.parseDouble(lines.get(count));
+		count++;
+		for(int i=0;i<=numNode-1;i++){
+			String s = lines.get(count);
+			String[] arr = s.split(" ");
+			int nodeName = Integer.parseInt(arr[0]);
+			double rate = Double.parseDouble(arr[1]);
+			rateOfArrivals.put(arr[0], Double.parseDouble(arr[1]));
+			nodes.get(nodeName-1).setRateOfArrival(rate);
+			count++;
+		}
+
+		Network network = new Network(nodes);
 		
-		GUI gui =  new GUI(nodes,agentVelo);
-		gui.setVisible(true);
+		AgentSimulator agentSimulator = new AgentSimulator(network, agentVelo,rateOfArrivals);
+		agentSimulator.generateAgent();	
+
 		
-		try{
-			for(Map.Entry<Agent, List<String>> entry: gui.getAgents().entrySet()){
-				for(String str : entry.getValue()){
-					System.out.println(str);
-					gui.moveAgent(str);
-					gui.getNetworkPanel().repaint();
-					//gui.captureScreen(gui.getNetworkPanel(),new File(gui.getCount()+".jpeg"));
-					
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e ) {
-						e.printStackTrace();
-					}
-				}
+		AgentSimulatorGUI agentSimulatorGUI = new AgentSimulatorGUI(agentSimulator);
+		agentSimulatorGUI.run();
+		
+		while(true){
+			agentSimulator.updatePosition();
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e ) {
+				e.printStackTrace();
 			}
-			
-		}finally{
-			
-            if (gui.getOut() != null) {
-                gui.getOut().close();
-            }
-		}	
+		}		
 	}
 	public static boolean checkNumberOfLine(String inputLine){
 		boolean check = true;
