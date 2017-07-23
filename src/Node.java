@@ -13,12 +13,16 @@ public class Node implements Comparable<Node>{
 	public Node previos;
 	public double minDistance = Double.POSITIVE_INFINITY;
 	private double rateOfArrival=0.00;
+	private List<Event> eventLog;
+	private boolean visited;
 	
 	public Node(String name,double x,double y){
 		this.name = name;
 		this.x = x;
 		this.y = y;
+		visited = false;
 		neighbors = new ArrayList<>();
+		eventLog = new ArrayList<Event>();
 	}
 	public String getName(){
 		return name;
@@ -59,6 +63,22 @@ public class Node implements Comparable<Node>{
 	}
 	public void setRateOfArrival(double rateOfArrival) {
 		this.rateOfArrival = rateOfArrival;
+	}
+
+	public List<Event> getEventLog() {
+		return eventLog;
+	}
+	public void setEventLog(List<Event> eventLog) {
+		this.eventLog = eventLog;
+	}
+	public void addEvent(Event str){
+		eventLog.add(str);
+	}
+	public boolean isVisited() {
+		return visited;
+	}
+	public void setVisited(boolean visited) {
+		this.visited = visited;
 	}
 	
 }

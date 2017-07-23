@@ -1,5 +1,6 @@
 import java.awt.AWTException;
 import java.awt.Robot;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +20,11 @@ import java.util.Scanner;
 
 
 
+
+
+
+
+
 import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
@@ -28,14 +34,17 @@ import org.json.simple.parser.ParseException;
 
 
 
+
 public class Main {
 	private static List<Node> nodes;
 	private static final String fileName = "config.txt";
 	private static int count=0;
+	private static double[][] trafficMatrix;
 	
 
 	public static void main(String[] args) throws IOException {
 		nodes = new ArrayList<Node>();
+		
 		
 		//read file 
 		FileReader fr = new FileReader(fileName);
@@ -87,7 +96,7 @@ public class Main {
 			return;
 		}
 		int numLink = Integer.parseInt(lines.get(count));
-		System.out.println(numLink);
+		
 		count++;
 		for(int i=0;i<=numLink-1;i++){
 			String s = lines.get(count);
@@ -126,35 +135,99 @@ public class Main {
 			System.out.println("err: please check number of link : number of link is less than link that created");
 			return;
 		}
-		double agentVelo = Double.parseDouble(lines.get(count));
+		double mean= Double.parseDouble(lines.get(count));
+		count++;
+		double stdVa = Double.parseDouble(lines.get(count));
+
+		//rate of arrival
 		count++;
 		for(int i=0;i<=numNode-1;i++){
 			String s = lines.get(count);
 			String[] arr = s.split(" ");
+
 			int nodeName = Integer.parseInt(arr[0]);
 			double rate = Double.parseDouble(arr[1]);
 			rateOfArrivals.put(arr[0], Double.parseDouble(arr[1]));
 			nodes.get(nodeName-1).setRateOfArrival(rate);
 			count++;
 		}
-
-		Network network = new Network(nodes);
+		//traffic matrix
+		count++;
+		trafficMatrix = new double[numNode+1][numNode+1];
 		
-		AgentSimulator agentSimulator = new AgentSimulator(network, agentVelo,rateOfArrivals);
-		agentSimulator.generateAgent();	
+		for(int i=1;i<=numNode;i++){
+			double sum = 0;
+			String s = lines.get(count);
+			String[] arr = s.split(" ");
+			for(int j=1;j<=numNode;j++){
+				trafficMatrix[i][j] = Double.parseDouble(arr[j]);
+				sum += Double.parseDouble(arr[j]);
+				
+			}
+			if(trafficMatrix[i][i]!=0){
+				System.out.println("not equal 0");
+				return;
+			}
+			if(sum > 1){
+				System.out.println("Summation of line is over than 1");
+				return;
+			}
+			
+			count++;
+		}
+		double[][] changedMatrix = changeMatrix();
 
+		//add to network
+		Network network = new Network(nodes);
+
+		//create simulator
+		AgentSimulator agentSimulator = new AgentSimulator(network, mean,stdVa,changedMatrix );
+		Map<Node,Node> sourceSink = agentSimulator.randomNode();
+		for(Map.Entry<Node, Node> entry:sourceSink.entrySet()){
+			List<Node> path = agentSimulator.computePath(entry.getKey(), entry.getValue());
+			agentSimulator.generateAgent(entry.getKey(),entry.getValue(),path);	
+			agentSimulator.numberOfAgents++;
+		}
 		
 		AgentSimulatorGUI agentSimulatorGUI = new AgentSimulatorGUI(agentSimulator);
-		agentSimulatorGUI.run();
-		
-		while(true){
-			agentSimulator.updatePosition();
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e ) {
-				e.printStackTrace();
+		CorrelationGUI correlationGUI = new CorrelationGUI(agentSimulator);
+		Thread a = new Thread(agentSimulatorGUI);
+		Thread b = new Thread(correlationGUI);
+		Thread c = new Thread(new Runnable(){
+
+			@SuppressWarnings("deprecation")
+			@Override
+			public void run() {
+				
+					while(true){
+						agentSimulator.updatePosition();
+						
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e ) {
+							e.printStackTrace();				
+						}
+					}
 			}
-		}		
+			
+		});
+		a.start();
+		b.start();
+		c.start();
+	}
+	public static double[][] changeMatrix(){
+		double[][] changed = new double[trafficMatrix.length][trafficMatrix.length];
+		for(int i=0;i<=trafficMatrix.length-1;i++){
+			for(int j=0;j<=trafficMatrix.length-1;j++){
+				changed[i][j] = 0;
+			}
+		}
+		for(int i=1;i<=trafficMatrix.length-1;i++){
+			for(int j=1;j<=trafficMatrix.length-1;j++){
+				changed[i][j] = changed[i][j-1]+trafficMatrix[i][j];
+			}
+		}
+		return changed;
 	}
 	public static boolean checkNumberOfLine(String inputLine){
 		boolean check = true;

@@ -7,5 +7,7 @@
 	<classpathentry kind="lib" path="D:/SKE/year3/Okayama U/MonteMediaCC/dist/monte-cc.jar"/>
 	<classpathentry kind="lib" path="D:/SKE/year3/Okayama U/java-json.jar"/>
 	<classpathentry kind="lib" path="D:/SKE/year3/Okayama U/json-simple.jar"/>
+	<classpathentry kind="lib" path="D:/SKE/year3/Okayama U/jfreechart-1.0.19/lib/jcommon-1.0.23.jar"/>
+	<classpathentry kind="lib" path="D:/SKE/year3/Okayama U/jfreechart-1.0.19/lib/jfreechart-1.0.19.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
