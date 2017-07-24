@@ -106,7 +106,6 @@ public class Controller {
 					dist = calculateDistance(source,n)+computeLongestDistance(n);
 					if(dist> max){
 						max = dist;
-						System.out.println(source.getName()+" "+n.getName()+" "+max);
 					}
 				}
 			}
