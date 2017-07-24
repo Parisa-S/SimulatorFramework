@@ -71,7 +71,7 @@ public class Main {
 					//check duplicate
 					if(!nodes.isEmpty()){
 						for(Node n:nodes){
-							if((n.getName().equals(node.getName())||(n.getX()==node.getX()&&n.getY()==node.getY()))){
+							if((n.getName().equals(node.getName())||(n.getPosX()==node.getPosX()&&n.getPosY()==node.getPosY()))){
 								System.out.println("duplicate node at "+node);
 								return;
 							}

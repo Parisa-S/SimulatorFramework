@@ -22,12 +22,12 @@ public class AgentSimulator extends Observable{
 	private Network network;
 	private double mean;
 	private double stdVa;
-	private Map<Agent,List<String>> agents;
+	private Map<Agent,List<String>> agentList;
 	private Map<Agent, Integer> agentsRunner;
-	private List<Double> velocitys;
+	private List<Double> velocityList;
 	private double[][] trafficMatrix;
-	private int[] cross;
-	private double[] crossP;
+	private int[] crossTemp;
+	private double[] crossPrevious;
 	private double[] crossScale;
 	private double[] crossCurrence;
 	private double time =0;
@@ -35,14 +35,12 @@ public class AgentSimulator extends Observable{
 	public int numberOfAgents = 0;
 	private Random random;
 	private int veloRunner=0;
-	private double maxVal=0;
+	private double longestDistance=0;
 	private int sizeOfArray=0;
-	private int counter = 0;
+	private int samplingCounter = 0;
 	private CrossCorrelation crossAB,crossBC,crossDE;
 	private List<CrossCorrelation> crossList;
 	private double meanCross = 0;
-
-	private double counter_time = 0;
 
 	public AgentSimulator(Network network,double mean,double stdVa,double[][] trafficMatrix){
 		this.network = network;
@@ -50,13 +48,13 @@ public class AgentSimulator extends Observable{
 		this.stdVa = stdVa;
 		this.trafficMatrix = trafficMatrix;
 		controller = new Controller(network.getNodes());
-		agents = new HashMap<Agent,List<String>>();
+		agentList = new HashMap<Agent,List<String>>();
 		agentsRunner = new HashMap<Agent,Integer>();
 
 		random = new Random();
-		velocitys = randomGaussian(mean,stdVa);
+		velocityList = randomGaussian(mean,stdVa);
 		crossList = new ArrayList<CrossCorrelation>();
-		maxVal = calculateLongestDistance(network);
+		longestDistance = calculateLongestDistance(network);
 		//sizeOfArray = (int) ((2*maxVal)/(mean*controller.getIntervalTime()));
 		sizeOfArray = 2600;
 		initCrossCorrelation();
@@ -80,32 +78,32 @@ public class AgentSimulator extends Observable{
 		crossDE = new CrossCorrelation(network.getNodes().get(5),network.getNodes().get(3));
 		
 		crossCurrence = new double[2*sizeOfArray-1];
-		crossP = new double[2*sizeOfArray-1];
+		crossPrevious = new double[2*sizeOfArray-1];
 
 		crossAB.setCrossCurrence(crossCurrence);
-		crossAB.setCrossP(crossP);
+		crossAB.setCrossP(crossPrevious);
 		crossBC.setCrossCurrence(crossCurrence);
-		crossBC.setCrossP(crossP);
+		crossBC.setCrossP(crossPrevious);
 		crossDE.setCrossCurrence(crossCurrence);
-		crossDE.setCrossP(crossP);
+		crossDE.setCrossP(crossPrevious);
 		
 		crossList.add(crossAB);
 		crossList.add(crossBC);
 		crossList.add(crossDE);
 	}
+	
 	public void updatePosition(){
 		this.time += 0.01;
 
 		List<Agent> agentToRemove = new ArrayList<Agent>();
-		Integer[] checkevent = new Integer[network.getNodes().size()];
+		Integer[] nodeEvent = new Integer[network.getNodes().size()];
 		String[] splited = new String[3];
 
-
 		for(int i=0;i<=network.getNodes().size()-1;i++){
-			checkevent[i] = 0;
+			nodeEvent[i] = 0;
 		}
 
-		for(Map.Entry<Agent, List<String>> entry: agents.entrySet()){			
+		for(Map.Entry<Agent, List<String>> entry: agentList.entrySet()){			
 			Agent agent = entry.getKey();
 			List<String> listPosition = entry.getValue();
 			int runner = agentsRunner.get(agent);
@@ -115,8 +113,8 @@ public class AgentSimulator extends Observable{
 			this.moveAgent(agent, Double.parseDouble(splited[1]), Double.parseDouble(splited[2]));
 
 			for(Node node: network.getNodes()){
-				if(Math.abs(agent.getPositionX()-node.getX())<=1.00 && Math.abs(agent.getPositionY()-node.getY())<=1.00){
-					checkevent[Integer.parseInt(node.getName())-1] += 1; 
+				if(Math.abs(agent.getPositionX()-node.getPosX())<=1.00 && Math.abs(agent.getPositionY()-node.getPosY())<=1.00){
+					nodeEvent[Integer.parseInt(node.getName())-1] += 1; 
 				}
 			}
 			if(runner+1>=listPosition.size()){
@@ -128,30 +126,16 @@ public class AgentSimulator extends Observable{
 		if(splited[0]!= null){
 			for(Node node:network.getNodes()){
 				if(node.getEventLog().size()<sizeOfArray){
-					node.addEvent(new Event(splited[0],checkevent[Integer.parseInt(node.getName())-1]));
+					node.addEvent(new Event(splited[0],nodeEvent[Integer.parseInt(node.getName())-1]));
 				}
 				else{
 					node.getEventLog().remove(node.getEventLog().get(0));
-					node.addEvent(new Event(splited[0],checkevent[Integer.parseInt(node.getName())-1]));
+					node.addEvent(new Event(splited[0],nodeEvent[Integer.parseInt(node.getName())-1]));
 				}
 			}
 		}
-		if(numberOfAgents <= MaxNumberOfAgents ){
-			Map<Node,Node> sourceSink = randomNode();
-			for(Map.Entry<Node, Node> entry:sourceSink.entrySet()){
-				List<Node> path = computePath(entry.getKey(), entry.getValue());
-				generateAgent(entry.getKey(),entry.getValue(),path);
-				numberOfAgents++;
-			}
-		}
-
-		if(agentToRemove.size() > 0){
-			for(Agent agent : agentToRemove){
-				agents.remove(agent);
-				agentsRunner.remove(agent);
-				numberOfAgents--;
-			}
-		}
+		checkNumberofAgent();
+		removeAgent(agentToRemove);
 
 		computeCrossCorrelation(crossAB);
 		computeCrossCorrelation(crossBC);
@@ -160,18 +144,39 @@ public class AgentSimulator extends Observable{
 		this.setChanged();
 		this.notifyObservers();
 	}
+	public void checkNumberofAgent(){
+		if(numberOfAgents <= MaxNumberOfAgents ){
+			Map<Node,Node> sourceSink = randomNode();
+			for(Map.Entry<Node, Node> entry:sourceSink.entrySet()){
+				List<Node> path = computePath(entry.getKey(), entry.getValue());
+				generateAgent(entry.getKey(),entry.getValue(),path);
+				numberOfAgents++;
+			}
+		}
+	}
+	
+	public void removeAgent(List<Agent> agentToRemove){
+		if(agentToRemove.size() > 0){
+			for(Agent agent : agentToRemove){
+				agentList.remove(agent);
+				agentsRunner.remove(agent);
+				numberOfAgents--;
+			}
+		}
+	}
+	
 	public void computeCrossCorrelation(CrossCorrelation cc){
 		double max=0;
 		String index = "0";
 		crossCurrence = new double[2*sizeOfArray-1];
-		cross = new int[2*sizeOfArray-1];
-		crossP = cc.getCrossP();
+		crossTemp = new int[2*sizeOfArray-1];
+		crossPrevious = cc.getCrossP();
 
-		int[] a = new int[sizeOfArray];
-		int[] b = new int[sizeOfArray];
+		int[] sourceLog = new int[sizeOfArray];
+		int[] sinkLog = new int[sizeOfArray];
 
-		Arrays.setAll(a,l -> cc.getSource().getEventLog().get(l).getValue());
-		Arrays.setAll(b,l -> cc.getSink().getEventLog().get(l).getValue());
+		Arrays.setAll(sourceLog,l -> cc.getSource().getEventLog().get(l).getValue());
+		Arrays.setAll(sinkLog,l -> cc.getSink().getEventLog().get(l).getValue());
 		int sumCross =0;
 		
 		for(int i=0;i<2*sizeOfArray-1;i++){
@@ -179,62 +184,26 @@ public class AgentSimulator extends Observable{
 			int front = Math.max(numtest-i, 0);
 			int back = Math.max(i-numtest, 0);
 			
-			int[] f = addZero2(front,back,a);
-			int[] g = addZero2(back,front,b);
+			int[] newSourceLog = addZero(front,back,sourceLog);
+			int[] newSinkLog = addZero(back,front,sinkLog);
 			
-			int temp[] = new int[f.length];
+			int temp[] = new int[newSourceLog.length];
 			
-			Arrays.setAll(temp, k -> f[k]*g[k]);
-			cross[i] = IntStream.of(temp).sum();
-			sumCross += cross[i];	
+			Arrays.setAll(temp, k -> newSourceLog[k]*newSinkLog[k]);
+			crossTemp[i] = IntStream.of(temp).sum();
+			sumCross += crossTemp[i];	
 		}
-		meanCross = sumCross*1.0/cross.length;
-		crossScale = new double[cross.length];
+		meanCross = sumCross*1.0/crossTemp.length;
+		crossScale = new double[crossTemp.length];
 		
-		Arrays.setAll(crossScale, j-> cross[j]-meanCross);
-		List<Integer> arr = Arrays.stream(cross).boxed().collect(Collectors.toList());
-
+		Arrays.setAll(crossScale, j-> crossTemp[j]-meanCross);
+		List<Integer> arr = Arrays.stream(crossTemp).boxed().collect(Collectors.toList());
+		
 		int tempT = IntStream.range(0, arr.size()).reduce((m,n)->arr.get(m)<arr.get(n)? n: m ).getAsInt();
-		//System.out.print("cross P :");
-		//for(int j=0;j<crossP.length;j++){
-		//	System.out.print(crossP[j]+" ");
-			//sumcrossP += crossP[j];
-		//}
-//		System.out.print(" "+sumcrossP);
-		//System.out.println();
-		//double[] tempP = new double[2*sizeOfArray-1];
-		Arrays.setAll(crossCurrence, k -> ((crossP[k]*counter)+crossScale[k])*1.0/(counter+1));
-		//System.out.print("tempP : ");
-		//for(int j=0;j<tempP.length;j++){
-		//	System.out.print(tempP[j]+" ");
-		//}
-		//System.out.println();
-//		double[] tempC = new double[2*sizeOfArray-1];
-//		Arrays.setAll(tempC, k -> tempP[k]+crossScale[k]);
-		//System.out.print("tempC : ");
-		//for(int j=0;j<tempC.length;j++){
-		//	System.out.print(tempC[j]+" ");
-		//}
-		//System.out.println();
-//		Arrays.setAll(crossCurrence, k -> (tempC[k]*1.0)/(counter+1));
-		//System.out.print("crossCurrence : ");
-		//for(int j=0;j<crossCurrence.length;j++){
-		//	System.out.print(crossCurrence[j]+" ");
-		//}
-		//System.out.println();
-		crossP = Arrays.copyOf(crossCurrence, crossCurrence.length);
-		double sumcrossC = 0;
-//		System.out.print("cross Currence "+cc.getSource().getName()+" "+cc.getSink().getName()+" ");
-//		
-//		for(int j=0;j<crossCurrence.length;j++){
-//			sumcrossC += crossCurrence[j];
-//			System.out.print(crossCurrence[j]+" ");
-//		}
-//		System.out.println();
-//		System.out.print("sum Cross C "+sumcrossC);
-//		System.out.println();
+		Arrays.setAll(crossCurrence, k -> ((crossPrevious[k]*samplingCounter)+crossScale[k])*1.0/(samplingCounter+1));
+		crossPrevious = Arrays.copyOf(crossCurrence, crossCurrence.length);
+
 		cc.setCrossCurrence(crossCurrence);
-		
 		cc.setCrossP(crossCurrence);
 //		if(cc.getHighIndex().size()<6000){
 //			cc.addHighIndex(index);
@@ -243,44 +212,31 @@ public class AgentSimulator extends Observable{
 //			cc.getHighIndex().remove(cc.getHighIndex().get(0));
 //			cc.addHighIndex(index);
 //		}
-		if(this.counter%6000==0){
+		if(this.samplingCounter%6000==0){
 			writeLogFileHighIndex(cc);
 		}
 	}
 	
-	
-	public int[] addZero2(int front,int back,int[] c){
-		//int[] result = new int[front+back+c.length];
-		int[] result2 = new int[front+back+c.length];
-		
-//		for(int i=0; i<c.length; i++){
-//			result[front+i] = c[i];
-//		}
-		System.arraycopy(c, 0, result2, front, c.length);
-//		if(Arrays.equals(result, result2)){
-//			System.out.println("same");
-//		}
-//		else{
-//			System.out.println("not same");
-//		}
-		return result2;
+	public int[] addZero(int front,int back,int[] eventLog){
+		int[] result = new int[front+back+eventLog.length];
+		System.arraycopy(eventLog, 0, result, front, eventLog.length);
+		return result;
 	}
 
 	public void moveAgent(Agent agent, double x, double y){		
 		agent.setPositionX(x);
 		agent.setPositionY(y);
 	}
+	
 	public Map<Node,Node> randomNode(){
-		//System.out.println("randonNode");
-		Node destNode;
+		Node sinkNode;
 		Map<Node,Node> sourceSink = new HashMap<Node,Node>();
 		List<Node> sourceNode = new ArrayList<Node>();
 		sourceNode = controller.randomSourceNode();
-		//System.out.println("source node: "+sourceNode);
+
 		for(Node node:sourceNode){
-			destNode = controller.randomDestNode(node,trafficMatrix);
-			sourceSink.put(node, destNode);
-			//System.out.println("sourceSink"+node.getName()+ " "+ destNode.getName());
+			sinkNode = controller.randomDestNode(node,trafficMatrix);
+			sourceSink.put(node, sinkNode);
 		}
 		return sourceSink;
 	}
@@ -290,34 +246,25 @@ public class AgentSimulator extends Observable{
 		path = controller.getShortestPathTo(sinkNode);
 		return path;
 	}
-	public void generateAgent(Node sourceNode,Node destNode,List<Node> path){
-		Agent agent = new Agent(sourceNode,destNode);
-		//System.out.println("already created agent");
-		
+	public void generateAgent(Node sourceNode,Node sinkNode,List<Node> path){
+		Agent agent = new Agent(sourceNode,sinkNode);
 		if(veloRunner >=1000){
 			veloRunner = 0;
 		}
 		else{
-			double velocity = velocitys.get(veloRunner);
+			double velocity = velocityList.get(veloRunner);
 			agent.setVelocity(velocity);
 			veloRunner++;
 		}
-		
-		//System.out.println(veloRunner);
-		//System.out.println(agent.getPositionX()+" "+agent.getPositionY());
 		List<String> finalresult = controller.calculateTrajectory(time,path,agent);
-		//System.out.println("final result "+finalresult);
-		//		if(checkDuplicateAgent(time,agent)){
-		//			this.generateAgent(sourceNode,destNode,path);
-		//		}
-		agents.put(agent, finalresult);
+		agentList.put(agent, finalresult);
 		agentsRunner.put(agent, 0);
 		this.writeLogFile(agent, finalresult);
 	}
 
 	public boolean checkDuplicateAgent(double time, Agent agent){
 		boolean duplicateAgent = false;
-		for(Map.Entry<Agent,List<String>> entry: agents.entrySet()){
+		for(Map.Entry<Agent,List<String>> entry: agentList.entrySet()){
 			Node oldAgentSource = entry.getKey().getSource();
 			Node oldAgentSink = entry.getKey().getSink();
 
@@ -328,10 +275,11 @@ public class AgentSimulator extends Observable{
 		}
 		return duplicateAgent;
 	}
+	
 	public void writeLogFile(Agent agent, List<String> finalresult){
 		try {
 			String[] sentence = finalresult.get(0).split(" ");
-			FileWriter writer = new FileWriter(sentence[0]+"_"+agent.getSource().getX()+"_"+agent.getSource().getY()+"_"+agent.getSink().getX()+"_"+agent.getSink().getY()+".txt");
+			FileWriter writer = new FileWriter(sentence[0]+"_"+agent.getSource().getPosX()+"_"+agent.getSource().getPosY()+"_"+agent.getSink().getPosX()+"_"+agent.getSink().getPosY()+".txt");
 			for(String result: finalresult){
 				writer.write(result);
 				writer.write(System.lineSeparator());
@@ -354,50 +302,11 @@ public class AgentSimulator extends Observable{
 			e.printStackTrace();
 		}
 	}
-	public void writeLogFileTest(int[] test){
-		try {
-			//List<String> sentence = test;
-			FileWriter writers = new FileWriter("test"+this.counter+".txt");
-			for(int i=0;i<test.length;i++){
-				writers.write(test[i]+" ");
-				writers.write(System.lineSeparator());
-			}
-			writers.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	public void writeLogFileTestCrossScale(double[] test){
-		try {
-			//List<String> sentence = test;
-			FileWriter writers = new FileWriter("test_Scale"+this.counter+".txt");
-			for(int i=0;i<test.length;i++){
-				writers.write(test[i]+" ");
-				writers.write(System.lineSeparator());
-			}
-			writers.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	public void writeLogFileTestCrossP(double[] test){
-		try {
-			//List<String> sentence = test;
-			FileWriter writers = new FileWriter("test_CP"+this.counter+".txt");
-			for(int i=0;i<test.length;i++){
-				writers.write(test[i]+" ");
-				writers.write(System.lineSeparator());
-			}
-			writers.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+
 	public List<Double> randomGaussian(double mean,double stdVa){
 		List<Double> randomNumber = new ArrayList<Double>();
 		for(int i=0;i<1000;i++){
 			double val =(random.nextGaussian()*stdVa)+mean;
-			//System.out.println(val);
 			randomNumber.add(val);
 		}
 		return randomNumber;
@@ -436,11 +345,11 @@ public class AgentSimulator extends Observable{
 	}
 
 	public Map<Agent, List<String>> getAgents() {
-		return agents;
+		return agentList;
 	}
 
 	public void setAgents(Map<Agent, List<String>> agents) {
-		this.agents = agents;
+		this.agentList = agents;
 	}
 
 	public Map<Agent, Integer> getAgentsRunner() {
@@ -468,11 +377,11 @@ public class AgentSimulator extends Observable{
 	}
 
 	public int getCounter() {
-		return counter;
+		return samplingCounter;
 	}
 
 	public void setCounter(int counter) {
-		this.counter = counter;
+		this.samplingCounter = counter;
 	}
 
 	public double[] getCrossCurrence() {

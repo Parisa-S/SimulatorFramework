@@ -99,13 +99,13 @@ public class GUI extends JFrame {
 				g.setColor(Color.YELLOW);
 				for(Node node:nodes){
 					for(Node neighbor:node.getNeighbor()){
-						g.drawLine((int)calculateSimPosX(node.getX()), (int)calculateSimPosY(node.getY()), (int)calculateSimPosX(neighbor.getX()), (int)calculateSimPosY(neighbor.getY()));
+						g.drawLine((int)calculateSimPosX(node.getPosX()), (int)calculateSimPosY(node.getPosY()), (int)calculateSimPosX(neighbor.getPosX()), (int)calculateSimPosY(neighbor.getPosY()));
 					}
 				}
 				//draw node
 				g.setColor(Color.YELLOW);
 				for(Node node:nodes){
-					g.fillOval((int)calculateSimPosX(node.getX())-15, (int)calculateSimPosY(node.getY())-15, 30, 30);
+					g.fillOval((int)calculateSimPosX(node.getPosX())-15, (int)calculateSimPosY(node.getPosY())-15, 30, 30);
 				}
 				//draw way
 				g.setColor(Color.CYAN);

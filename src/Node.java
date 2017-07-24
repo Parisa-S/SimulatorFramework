@@ -24,43 +24,55 @@ public class Node implements Comparable<Node>{
 		neighbors = new ArrayList<>();
 		eventLog = new ArrayList<Event>();
 	}
+	
 	public String getName(){
 		return name;
 	}
+	
 	public void setName(String name){
 		this.name = name;
 	}
-	public double getX() {
+	
+	public double getPosX() {
 		return x;
 	}
+	
 	public void setX(double x) {
 		this.x = x;
 	}
-	public double getY() {
+	
+	public double getPosY() {
 		return y;
 	}
+	
 	public void setY(double y) {
 		this.y = y;
 	}
+	
 	public List<Node> getNeighbor() {
 		return neighbors;
 	}
+	
 	public void setNeighbor(List<Node> neighbors) {
 		this.neighbors = neighbors;
 	}
+	
 	public void addNeighbor(Node node){
 		neighbors.add(node);
 	}
+	
 	public String toString(){
 		return "name: " +name+" |Position : "+ x+", "+y;
 	}
-	public int compareTo(Node other)
-    {
+	
+	public int compareTo(Node other){
         return Double.compare(minDistance, other.minDistance);
     }
+	
 	public double getRateOfArrival() {
 		return rateOfArrival;
 	}
+	
 	public void setRateOfArrival(double rateOfArrival) {
 		this.rateOfArrival = rateOfArrival;
 	}
@@ -68,15 +80,19 @@ public class Node implements Comparable<Node>{
 	public List<Event> getEventLog() {
 		return eventLog;
 	}
+	
 	public void setEventLog(List<Event> eventLog) {
 		this.eventLog = eventLog;
 	}
+	
 	public void addEvent(Event str){
 		eventLog.add(str);
 	}
+	
 	public boolean isVisited() {
 		return visited;
 	}
+	
 	public void setVisited(boolean visited) {
 		this.visited = visited;
 	}

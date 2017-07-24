@@ -4,35 +4,35 @@ public class Agent implements Comparable<Node>{
 
 	private Node source;
 	private Node sink;
-	private double x;
-	private double y;
+	private double posX;
+	private double posY;
 	private double velocity;
 	private double simPosX =0;
 	private double simPosY =0;
 	public double minDistance = Double.POSITIVE_INFINITY;
 	
 	public Agent( Node source, Node sink){
-		this.x = source.getX();
-		this.y = source.getY();
+		this.posX = source.getPosX();
+		this.posY = source.getPosY();
 		this.source = source;
 		this.sink =sink;
 		this.velocity = 1.50;
 	}
 
 	public double getPositionX() {
-		return x;
+		return posX;
 	}
 
 	public void setPositionX(double x) {
-		this.x = x;
+		this.posX = x;
 	}
 
 	public double getPositionY() {
-		return y;
+		return posY;
 	}
 
 	public void setPositionY(double y) {
-		this.y = y;
+		this.posY = y;
 	}
 
 	public double getVelocity() {
@@ -42,6 +42,7 @@ public class Agent implements Comparable<Node>{
 	public void setVelocity(double velocity) {
 		this.velocity = velocity;
 	}
+	
 	public double getSimPosX(){
 		return simPosX;
 	}
@@ -59,10 +60,10 @@ public class Agent implements Comparable<Node>{
 	}
 
 	public String toString(){
-		return "Agent at x : "+x+" y : "+y;
+		return "Agent at x : "+posX+" y : "+posY;
 	}
-	public int compareTo(Node other)
-    {
+	
+	public int compareTo(Node other){
         return Double.compare(minDistance, other.minDistance);
     }
 
