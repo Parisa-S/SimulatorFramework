@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 
 
 public class Agent implements Comparable<Node>{
@@ -10,6 +14,8 @@ public class Agent implements Comparable<Node>{
 	private double simPosX =0;
 	private double simPosY =0;
 	public double minDistance = Double.POSITIVE_INFINITY;
+	private List<Node> path;
+	private List<Boolean> entered;
 	
 	public Agent( Node source, Node sink){
 		this.posX = source.getPosX();
@@ -18,7 +24,25 @@ public class Agent implements Comparable<Node>{
 		this.sink =sink;
 		this.velocity = 1.50;
 	}
-
+	public Agent(List<Node> path){
+		this.path = new ArrayList<Node>();;
+		this.entered = new ArrayList<Boolean>();
+		//System.out.println(path.size());
+		for(int i=0; i<path.size(); i++){
+			entered.add(false);
+			this.path.add(path.get(i));
+			//System.out.println(path.get(i) + " " + entered.size());
+		}
+		//System.out.println(entered.size());
+		//System.out.println();
+		
+		this.source = path.get(0);
+		this.sink =path.get(path.size()-1);
+		this.posX = source.getPosX();
+		this.posY = source.getPosY();
+		this.velocity = 1.50;
+		
+	}
 	public double getPositionX() {
 		return posX;
 	}
@@ -82,5 +106,22 @@ public class Agent implements Comparable<Node>{
 	public void setSink(Node sink) {
 		this.sink = sink;
 	}
-	
+	public List<Node> getPath() {
+		return path;
+	}
+	public void setPath(List<Node> path) {
+		this.path = path;
+	}
+	public List<Boolean> getEntered() {
+		return entered;
+	}
+	public boolean getEnteredI(int index) {
+		return entered.get(index);
+	}
+	public void setEntered(List<Boolean> entered) {
+		this.entered = entered;
+	}
+	public void setEnteredI(int index,Boolean value){
+		this.entered.set(index, value);
+	}
 }

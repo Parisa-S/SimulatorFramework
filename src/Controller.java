@@ -12,18 +12,20 @@ import java.util.PriorityQueue;
 
 
 public class Controller {
-	private  List<Node> nodeList = new ArrayList<Node>();
+	private  List<Node> nodeobsList = new ArrayList<Node>();
+	private List<Node> nodeprime = new ArrayList<Node>();
 	private List<Node> path = new ArrayList<Node>();
 	private double intervalTime = 0.01;
 	private double time =0;
 	
-	public Controller(List<Node> nodes){
-		this.nodeList = nodes;
+	public Controller(Network network){
+		this.nodeobsList = network.getNodes();
+		this.nodeprime = network.getNodeprime();
 	}
 	
 	public List<Node> randomSourceNode(){
 		List<Node> createNode = new ArrayList<Node>();
-		for(Node node: nodeList){
+		for(Node node: nodeprime){
 			double randomNumber = Math.random();
 			if(randomNumber<node.getRateOfArrival()){
 				createNode.add(node);
@@ -45,7 +47,7 @@ public class Controller {
 				break;
 			}
 		}
-		return nodeList.get(num);
+		return nodeprime.get(num);
 	}
 
 	public void computePaths(Node source,List<Node> nodeList){

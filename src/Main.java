@@ -36,21 +36,25 @@ import org.json.simple.parser.ParseException;
 
 
 public class Main {
-	private static List<Node> nodes;
-	private static final String fileName = "config.txt";
+	private static List<Node> nodeobs,nodeprime,allnodes;
+	private static final String fileConfig = "config.txt";
+	private static final String filePreferences = "preferences.txt";
 	private static int count=0;
+	private static int countPre = 0;
 	private static double[][] trafficMatrix;
 	
 
 	public static void main(String[] args) throws IOException {
-		nodes = new ArrayList<Node>();
-		
+		nodeobs = new ArrayList<Node>();
+		nodeprime = new ArrayList<Node>();
+		allnodes = new ArrayList<Node>();
 		
 		//read file 
-		FileReader fr = new FileReader(fileName);
+		FileReader fr = new FileReader(fileConfig);
 		BufferedReader br = new BufferedReader(fr);
 		List<String> lines = new ArrayList<String>();
 		String currentLine = null;
+		
 		Map<String,Double> rateOfArrivals = new HashMap<String,Double>();
 		
 		while((currentLine = br.readLine()) != null){
@@ -69,17 +73,53 @@ public class Main {
 				//check scale
 				if(checkScale(Double.parseDouble(arr[1]),Double.parseDouble(arr[2]))){
 					//check duplicate
-					if(!nodes.isEmpty()){
-						for(Node n:nodes){
+					if(!nodeobs.isEmpty()){
+						for(Node n:nodeobs){
 							if((n.getName().equals(node.getName())||(n.getPosX()==node.getPosX()&&n.getPosY()==node.getPosY()))){
 								System.out.println("duplicate node at "+node);
 								return;
 							}
 						}
-						nodes.add(node);
+						nodeobs.add(node);
+						allnodes.add(node);
 					}
 					else {
-						nodes.add(node);
+						nodeobs.add(node);
+						allnodes.add(node);
+					}
+				}else {
+					System.out.println("over scale");
+					return;
+				}
+			}catch(ArrayIndexOutOfBoundsException e){
+				System.out.println("can not create node number"+count );
+				return;
+			}
+			count++;
+			System.out.println(count);
+		}
+		for(int i=0;i<=numNode-1;i++){
+			String s = lines.get(count);
+			String[] arr = s.split(" ");
+			//check the node that is over than input number of node or not 
+			try{
+				Node node = new Node(arr[0],Double.parseDouble(arr[1]),Double.parseDouble(arr[2]));
+				//check scale
+				if(checkScale(Double.parseDouble(arr[1]),Double.parseDouble(arr[2]))){
+					//check duplicate
+					if(!nodeprime.isEmpty()){
+						for(Node n:nodeprime){
+							if((n.getName().equals(node.getName())||(n.getPosX()==node.getPosX()&&n.getPosY()==node.getPosY()))){
+								System.out.println("duplicate node at "+node);
+								return;
+							}
+						}
+						nodeprime.add(node);
+						allnodes.add(node);
+					}
+					else {
+						nodeprime.add(node);
+						allnodes.add(node);
 					}
 				}else {
 					System.out.println("over scale");
@@ -104,8 +144,10 @@ public class Main {
 			
 			boolean existstart = false;
 			boolean existend = false;
+			boolean existstartP = false;
+			boolean existendP = false;
 			try{
-				for(Node n: nodes){
+				for(Node n: nodeobs){
 					if(n.getName().equals(arr[0])){
 						existstart = true;
 						continue;
@@ -115,13 +157,30 @@ public class Main {
 						continue;
 					}
 				}
+				for(Node n: nodeprime){
+					if(n.getName().equals(arr[0])){
+						existstartP = true;
+						continue;
+					}
+					if(n.getName().equals(arr[1])){
+						existendP = true;
+						continue;
+					}
+				}
+				//System.out.println(existstart+" "+existend+" "+existstartP+" "+existendP+" ");
 				if(existstart && existend){
-					nodes.get(Integer.parseInt(arr[0])-1).addNeighbor(nodes.get(Integer.parseInt(arr[1])-1));
-					nodes.get(Integer.parseInt(arr[1])-1).addNeighbor(nodes.get(Integer.parseInt(arr[0])-1));
+					nodeobs.get(Integer.parseInt(arr[0])-1).addNeighbor(nodeobs.get(Integer.parseInt(arr[1])-1));
+					nodeobs.get(Integer.parseInt(arr[1])-1).addNeighbor(nodeobs.get(Integer.parseInt(arr[0])-1));
+					System.out.println("test");
+				}else if((existstart||existend) && existendP){
+					nodeobs.get(Integer.parseInt(arr[0])-1).addNeighbor(nodeprime.get(Integer.parseInt(arr[1])-(numNode+1)));
+					nodeprime.get(Integer.parseInt(arr[1])-(numNode+1)).addNeighbor(nodeobs.get(Integer.parseInt(arr[0])-1));
+					System.out.println("test 2");
 				}else {
 					System.out.println("node is not exist");
 					return;
 				}
+				
 			}catch(NumberFormatException e){
 				System.out.println("the number of link and link detail is not match");
 				return;
@@ -148,7 +207,7 @@ public class Main {
 			int nodeName = Integer.parseInt(arr[0]);
 			double rate = Double.parseDouble(arr[1]);
 			rateOfArrivals.put(arr[0], Double.parseDouble(arr[1]));
-			nodes.get(nodeName-1).setRateOfArrival(rate);
+			nodeobs.get(nodeName-1).setRateOfArrival(rate);
 			count++;
 		}
 		//traffic matrix
@@ -176,12 +235,23 @@ public class Main {
 			count++;
 		}
 		double[][] changedMatrix = changeMatrix();
-
+		//read file
+		FileReader frPre = new FileReader(filePreferences);
+		BufferedReader brPre = new BufferedReader(frPre);
+		List<String> linesPre = new ArrayList<String>();
+		String currentLinePre = null;
+		while((currentLinePre = brPre.readLine()) != null){
+			if(!currentLinePre.startsWith("#")|| currentLinePre.trim().isEmpty()){
+				linesPre.add(currentLinePre);
+			}
+		}
+		int eventSt = Integer.parseInt(linesPre.get(countPre));
 		//add to network
-		Network network = new Network(nodes);
+		Network network = new Network(nodeobs,nodeprime,allnodes);
+		
 
 		//create simulator
-		AgentSimulator agentSimulator = new AgentSimulator(network, mean,stdVa,changedMatrix );
+		AgentSimulator agentSimulator = new AgentSimulator(network, mean,stdVa,changedMatrix,eventSt );
 		Map<Node,Node> sourceSink = agentSimulator.randomNode();
 		for(Map.Entry<Node, Node> entry:sourceSink.entrySet()){
 			List<Node> path = agentSimulator.computePath(entry.getKey(), entry.getValue());
@@ -191,16 +261,17 @@ public class Main {
 		
 		AgentSimulatorGUI agentSimulatorGUI = new AgentSimulatorGUI(agentSimulator);
 		CorrelationGUI correlationGUI = new CorrelationGUI(agentSimulator);
+		EventLogGUI eventLogGUI = new EventLogGUI(agentSimulator);
 		Thread a = new Thread(agentSimulatorGUI);
 		Thread b = new Thread(correlationGUI);
+		Thread d = new Thread(eventLogGUI);
 		Thread c = new Thread(new Runnable(){
 
-			@SuppressWarnings("deprecation")
 			@Override
 			public void run() {
 				
 					while(true){
-						agentSimulator.updatePosition();
+						agentSimulator.updatePosition(eventSt);
 						
 						try {
 							Thread.sleep(10);
@@ -213,6 +284,7 @@ public class Main {
 		});
 		a.start();
 		b.start();
+		d.start();
 		c.start();
 	}
 	public static double[][] changeMatrix(){
@@ -248,7 +320,7 @@ public class Main {
 		return check;
 	}
 	public static boolean checkScale(double x, double y){
-		if(x>10||y>10){
+		if(x>16||y>16){
 			return false;
 		}
 		return true;

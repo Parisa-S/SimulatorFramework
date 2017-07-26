@@ -37,9 +37,9 @@ public class AgentSimulatorGUI extends JFrame implements Observer, Runnable{
 	private JPanel networkPanel;
 	private AgentSimulator agentSimulator;
 	
-	private static int frameSize = 600;
-	private static int frameSizeH = 620;
-	private JLabel a,b,c;
+	private static int frameSize = 800;
+	private static int frameSizeH = 820;
+	private JLabel a,b,c,d,f;
 	private AVIOutputStreamOLD out;
 	private List<File> imageLists = new ArrayList<File>();
 	
@@ -60,6 +60,10 @@ public class AgentSimulatorGUI extends JFrame implements Observer, Runnable{
 		b.setForeground(Color.YELLOW);
 		c = new JLabel("2");
 		c.setForeground(Color.YELLOW);
+		d = new JLabel("3");
+		d.setForeground(Color.YELLOW);
+		f = new JLabel("5");
+		f.setForeground(Color.YELLOW);
 		
 		networkPanel = new JPanel(){
 			public void paintComponent(Graphics g){
@@ -78,21 +82,27 @@ public class AgentSimulatorGUI extends JFrame implements Observer, Runnable{
 						g.drawLine((int)calculateSimPosX(node.getPosX()), (int)calculateSimPosY(node.getPosY()), (int)calculateSimPosX(neighbor.getPosX()), (int)calculateSimPosY(neighbor.getPosY()));
 					}
 				}
+				
 				//draw node
 				g.setColor(Color.YELLOW);
 				for(Node node: agentSimulator.getNetwork().getNodes()){
 					g.fillOval((int)calculateSimPosX(node.getPosX())-15, (int)calculateSimPosY(node.getPosY())-15, 30, 30);
+					g.drawOval((int)calculateSimPosX(node.getPosX())-55, (int)calculateSimPosY(node.getPosY())-55, 110,110);
 				}
-				g.setColor(Color.RED);
-				g.drawOval((int)calculateSimPosX(10)-55, (int)calculateSimPosY(10)-55, 110,110);
-				g.drawOval((int)calculateSimPosX(0)-55, (int)calculateSimPosY(10)-55, 110,110);
-				g.drawOval((int)calculateSimPosX(0)-55, (int)calculateSimPosY(0)-55, 110,110);
+				for(Node node: agentSimulator.getNetwork().getNodeprime()){
+					g.fillOval((int)calculateSimPosX(node.getPosX())-15, (int)calculateSimPosY(node.getPosY())-15, 30, 30);
+				}
+				
 				this.add(a);
 				this.add(b);
 				this.add(c);
-				a.setLocation((int)calculateSimPosX(10)-30, (int)calculateSimPosY(10)-30);
-				b.setLocation((int)calculateSimPosX(0)-30, (int)calculateSimPosY(10)-30);
-				c.setLocation((int)calculateSimPosX(0)-30, (int)calculateSimPosY(0)-30);
+				this.add(d);
+				this.add(f);
+				a.setLocation((int)calculateSimPosX(12)-30, (int)calculateSimPosY(12)-30);
+				b.setLocation((int)calculateSimPosX(2)-30, (int)calculateSimPosY(12)-30);
+				c.setLocation((int)calculateSimPosX(2)-30, (int)calculateSimPosY(2)-30);
+				d.setLocation((int)calculateSimPosX(12)-30, (int)calculateSimPosY(2)-30);
+				f.setLocation((int)calculateSimPosX(7)-30, (int)calculateSimPosY(2)-30);
 				
 				String countAgentNodeA = ""+agentSimulator.getNetwork().getNodes().get(1).getEventLog().get(agentSimulator.getNetwork().getNodes().get(0).getEventLog().size()-1).getValue();
 				a.setText(countAgentNodeA);
@@ -100,7 +110,10 @@ public class AgentSimulatorGUI extends JFrame implements Observer, Runnable{
 				b.setText(countAgentNodeB);
 				String countAgentNodeC = ""+agentSimulator.getNetwork().getNodes().get(2).getEventLog().get(agentSimulator.getNetwork().getNodes().get(2).getEventLog().size()-1).getValue();
 				c.setText(countAgentNodeC);
-							
+				String countAgentNodeD = ""+agentSimulator.getNetwork().getNodes().get(3).getEventLog().get(agentSimulator.getNetwork().getNodes().get(0).getEventLog().size()-1).getValue();
+				d.setText(countAgentNodeD);
+				String countAgentNodeF = ""+agentSimulator.getNetwork().getNodes().get(5).getEventLog().get(agentSimulator.getNetwork().getNodes().get(2).getEventLog().size()-1).getValue();
+				f.setText(countAgentNodeF);		
 				//draw agent position way
 				g.setColor(Color.CYAN);
 				for(Map.Entry<Agent, List<String>> entry: agentSimulator.getAgents().entrySet()){
