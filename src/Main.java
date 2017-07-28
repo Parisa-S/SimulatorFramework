@@ -73,18 +73,18 @@ public class Main {
 				//check scale
 				if(checkScale(Double.parseDouble(arr[1]),Double.parseDouble(arr[2]))){
 					//check duplicate
-					if(!nodeobs.isEmpty()){
-						for(Node n:nodeobs){
+					if(!nodeprime.isEmpty()){
+						for(Node n:nodeprime){
 							if((n.getName().equals(node.getName())||(n.getPosX()==node.getPosX()&&n.getPosY()==node.getPosY()))){
 								System.out.println("duplicate node at "+node);
 								return;
 							}
 						}
-						nodeobs.add(node);
+						nodeprime.add(node);
 						allnodes.add(node);
 					}
 					else {
-						nodeobs.add(node);
+						nodeprime.add(node);
 						allnodes.add(node);
 					}
 				}else {
@@ -107,18 +107,18 @@ public class Main {
 				//check scale
 				if(checkScale(Double.parseDouble(arr[1]),Double.parseDouble(arr[2]))){
 					//check duplicate
-					if(!nodeprime.isEmpty()){
-						for(Node n:nodeprime){
+					if(!nodeobs.isEmpty()){
+						for(Node n:nodeobs){
 							if((n.getName().equals(node.getName())||(n.getPosX()==node.getPosX()&&n.getPosY()==node.getPosY()))){
 								System.out.println("duplicate node at "+node);
 								return;
 							}
 						}
-						nodeprime.add(node);
+						nodeobs.add(node);
 						allnodes.add(node);
 					}
 					else {
-						nodeprime.add(node);
+						nodeobs.add(node);
 						allnodes.add(node);
 					}
 				}else {
@@ -147,7 +147,7 @@ public class Main {
 			boolean existstartP = false;
 			boolean existendP = false;
 			try{
-				for(Node n: nodeobs){
+				for(Node n: allnodes){
 					if(n.getName().equals(arr[0])){
 						existstart = true;
 						continue;
@@ -157,25 +157,11 @@ public class Main {
 						continue;
 					}
 				}
-				for(Node n: nodeprime){
-					if(n.getName().equals(arr[0])){
-						existstartP = true;
-						continue;
-					}
-					if(n.getName().equals(arr[1])){
-						existendP = true;
-						continue;
-					}
-				}
-				//System.out.println(existstart+" "+existend+" "+existstartP+" "+existendP+" ");
+				System.out.println(existstart+" "+existend+" "+existstartP+" "+existendP+" ");
 				if(existstart && existend){
-					nodeobs.get(Integer.parseInt(arr[0])-1).addNeighbor(nodeobs.get(Integer.parseInt(arr[1])-1));
-					nodeobs.get(Integer.parseInt(arr[1])-1).addNeighbor(nodeobs.get(Integer.parseInt(arr[0])-1));
+					allnodes.get(Integer.parseInt(arr[0])-1).addNeighbor(allnodes.get(Integer.parseInt(arr[1])-1));
+					allnodes.get(Integer.parseInt(arr[1])-1).addNeighbor(allnodes.get(Integer.parseInt(arr[0])-1));
 					System.out.println("test");
-				}else if((existstart||existend) && existendP){
-					nodeobs.get(Integer.parseInt(arr[0])-1).addNeighbor(nodeprime.get(Integer.parseInt(arr[1])-(numNode+1)));
-					nodeprime.get(Integer.parseInt(arr[1])-(numNode+1)).addNeighbor(nodeobs.get(Integer.parseInt(arr[0])-1));
-					System.out.println("test 2");
 				}else {
 					System.out.println("node is not exist");
 					return;
@@ -207,7 +193,7 @@ public class Main {
 			int nodeName = Integer.parseInt(arr[0]);
 			double rate = Double.parseDouble(arr[1]);
 			rateOfArrivals.put(arr[0], Double.parseDouble(arr[1]));
-			nodeobs.get(nodeName-1).setRateOfArrival(rate);
+			nodeprime.get(nodeName-1).setRateOfArrival(rate);
 			count++;
 		}
 		//traffic matrix

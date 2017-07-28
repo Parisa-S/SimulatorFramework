@@ -38,7 +38,8 @@ public class AgentSimulator extends Observable{
 	private double longestDistance=0;
 	private int sizeOfArray=0;
 	private int samplingCounter = 0;
-	private CrossCorrelation crossAB,crossBC,crossDE,crossBA,crossAC;
+	private CrossCorrelation crossAB,crossBC,crossDF,crossFD,crossBA,crossCB;
+	private double[] sumCrossAB,sumCrossDF,sumCrossBC;
 	private List<CrossCorrelation> crossList;
 	private double meanCross = 0;
 	private static int eventSt;
@@ -69,37 +70,45 @@ public class AgentSimulator extends Observable{
 	}
 	public double calculateLongestDistance(Network network){
 		double value =0;
-		for(Node n: network.getNodes()){
-			value = controller.initLongestDistance(n,network.getNodes());
+		for(Node n: network.getAllnodes()){
+			value = controller.initLongestDistance(n,network.getAllnodes());
 		}
 		return value;
 	}
 	public void initCrossCorrelation(){
 		crossAB = new CrossCorrelation(network.getNodes().get(0),network.getNodes().get(1));
-		crossBC = new CrossCorrelation(network.getNodes().get(1),network.getNodes().get(2));
-		crossDE = new CrossCorrelation(network.getNodes().get(5),network.getNodes().get(3));
 		crossBA = new CrossCorrelation(network.getNodes().get(1),network.getNodes().get(0));
-		crossAC = new CrossCorrelation(network.getNodes().get(0),network.getNodes().get(2));
+		crossDF = new CrossCorrelation(network.getNodes().get(3),network.getNodes().get(5));
+		crossFD = new CrossCorrelation(network.getNodes().get(5),network.getNodes().get(3));
+		crossBC = new CrossCorrelation(network.getNodes().get(1),network.getNodes().get(2));
+		crossCB = new CrossCorrelation(network.getNodes().get(2),network.getNodes().get(1));
 		
 		crossCurrence = new double[2*sizeOfArray-1];
 		crossPrevious = new double[2*sizeOfArray-1];
+		
+		sumCrossAB = new double[2*sizeOfArray-1];
+		sumCrossDF = new double[2*sizeOfArray-1];
+		sumCrossBC = new double[2*sizeOfArray-1];
 
 		crossAB.setCrossCurrence(crossCurrence);
 		crossAB.setCrossP(crossPrevious);
-		crossBC.setCrossCurrence(crossCurrence);
-		crossBC.setCrossP(crossPrevious);
-		crossDE.setCrossCurrence(crossCurrence);
-		crossDE.setCrossP(crossPrevious);
 		crossBA.setCrossCurrence(crossCurrence);
 		crossBA.setCrossP(crossPrevious);
-		crossAC.setCrossCurrence(crossCurrence);
-		crossAC.setCrossP(crossPrevious);
+		crossDF.setCrossCurrence(crossCurrence);
+		crossDF.setCrossP(crossPrevious);
+		crossFD.setCrossCurrence(crossCurrence);
+		crossFD.setCrossP(crossPrevious);
+		crossBC.setCrossCurrence(crossCurrence);
+		crossBC.setCrossP(crossPrevious);
+		crossCB.setCrossCurrence(crossCurrence);
+		crossCB.setCrossP(crossPrevious);
 		
 		crossList.add(crossAB);
-		crossList.add(crossBC);
-		crossList.add(crossDE);
 		crossList.add(crossBA);
-		crossList.add(crossAC);
+		crossList.add(crossDF);
+		crossList.add(crossFD);
+		crossList.add(crossBC);
+		crossList.add(crossCB);
 	}
 	
 	public void updatePosition(int eventSt){
@@ -121,20 +130,23 @@ public class AgentSimulator extends Observable{
 			String currentPosition = listPosition.get(runner);
 			splited = currentPosition.split(" ");
 			this.moveAgent(agent, Double.parseDouble(splited[1]), Double.parseDouble(splited[2]));
-//			
+			
 			if(eventSt == 1){
 				for(Node node: network.getNodes()){
+					//System.out.println("node name "+node.getName());
 					if(Math.abs(agent.getPositionX()-node.getPosX())<=1.00 && Math.abs(agent.getPositionY()-node.getPosY())<=1.00){
-						nodeEvent[Integer.parseInt(node.getName())-1] += 1; 
+						nodeEvent[Integer.parseInt(node.getName())-network.getNodes().size()-1] += 1; 
+						//System.out.println(Integer.parseInt(node.getName())-network.getNodes().size()-1+" "+nodeEvent[Integer.parseInt(node.getName())-network.getNodes().size()-1]);
 					}
 				}
 			}
-			if(eventSt ==2){
+			if(eventSt == 2){
 				for(int i=0; i<agent.getPath().size(); i++){
 					Node node = agent.getPath().get(i);
+					//System.out.println(node.getName());
 					boolean isEntered = agent.getEnteredI(i);
-					if(Math.abs(agent.getPositionX()-node.getPosX())<=1.00 && Math.abs(agent.getPositionY()-node.getPosY())<=1.00 && !isEntered){
-						nodeEvent[Integer.parseInt(node.getName())-1] = 1; 
+					if(Math.abs(agent.getPositionX()-node.getPosX())<=1.00 && Math.abs(agent.getPositionY()-node.getPosY())<=1.00 && !isEntered &&Integer.parseInt(node.getName())>nodeEvent.length){
+						nodeEvent[Integer.parseInt(node.getName())-network.getNodes().size()-1] = 1; 
 						agent.setEnteredI(i,true);
 					}
 				}
@@ -149,7 +161,7 @@ public class AgentSimulator extends Observable{
 		if(splited[0]!= null){
 			for(Node node:network.getNodes()){
 					node.getEventLog().remove(node.getEventLog().get(0));
-					node.addEvent(new Event(splited[0],nodeEvent[Integer.parseInt(node.getName())-1]));	
+					node.addEvent(new Event(splited[0],nodeEvent[Integer.parseInt(node.getName())-network.getNodes().size()-1]));	
 			}
 		}
 //		for(Node node: network.getNodes()){
@@ -166,11 +178,12 @@ public class AgentSimulator extends Observable{
 //		computeCrossCorrelation(crossAB);
 //		computeCrossCorrelation(crossBC);
 //		computeCrossCorrelation(crossDE);
-		compute2(crossAB);
-		compute2(crossBC);
-		compute2(crossDE);
-		compute2(crossBA);
-		compute2(crossAC);
+		for(CrossCorrelation cross : crossList){
+			compute2(cross);
+		}
+		Arrays.setAll( sumCrossAB ,k -> crossAB.getCrossCurrence()[k]+crossBA.getCrossCurrence()[k]);
+		Arrays.setAll( sumCrossDF ,k -> crossDF.getCrossCurrence()[k]+crossFD.getCrossCurrence()[k]);
+		Arrays.setAll( sumCrossBC ,k -> crossBC.getCrossCurrence()[k]+crossCB.getCrossCurrence()[k]);
 		
 		this.setChanged();
 		this.notifyObservers();
@@ -181,6 +194,7 @@ public class AgentSimulator extends Observable{
 			for(Map.Entry<Node, Node> entry:sourceSink.entrySet()){
 				List<Node> path = computePath(entry.getKey(), entry.getValue());
 				generateAgent(entry.getKey(),entry.getValue(),path);
+				//System.out.println("create agent at "+entry.getKey()+" "+entry.getValue()+" "+path);
 				numberOfAgents++;
 			}
 		}
@@ -301,9 +315,10 @@ public class AgentSimulator extends Observable{
 		cc.setCrossCurrence(crossCurrence);
 		cc.setCrossP(crossCurrence);
 	}
+	
 	public int[] addZero(int front,int back,int[] eventLog){
 		int[] result = new int[front+back+eventLog.length];
-		System.arraycopy(eventLog, 0, result, front, eventLog.length);
+		//System.arraycopy(eventLog, 0, result, front, eventLog.length);
 		return result;
 	}
 
@@ -325,8 +340,9 @@ public class AgentSimulator extends Observable{
 		return sourceSink;
 	}
 	public List<Node> computePath(Node sourceNode,Node sinkNode){
+		//System.out.println(sourceNode.getName()+ " "+ sinkNode.getName());
 		List<Node> path = new ArrayList<Node>();
-		controller.computePaths(sourceNode,network.getNodes());
+		controller.computePaths(sourceNode,network.getAllnodes());
 		path = controller.getShortestPathTo(sinkNode);
 		return path;
 	}
@@ -477,30 +493,6 @@ public class AgentSimulator extends Observable{
 		this.crossCurrence = crossCurrence;
 	}
 
-	public CrossCorrelation getcrossAB() {
-		return crossAB;
-	}
-
-	public void setcrossAB(CrossCorrelation ab) {
-		this.crossAB = ab;
-	}
-
-	public CrossCorrelation getCrossBC() {
-		return crossBC;
-	}
-
-	public void setCrossBC(CrossCorrelation crossBC) {
-		this.crossBC = crossBC;
-	}
-
-	public CrossCorrelation getCrossDE() {
-		return crossDE;
-	}
-
-	public void setCrossDE(CrossCorrelation crossDE) {
-		this.crossDE = crossDE;
-	}
-
 	public List<CrossCorrelation> getCrossList() {
 		return crossList;
 	}
@@ -509,17 +501,61 @@ public class AgentSimulator extends Observable{
 		this.crossList = crossList;
 	}
 	
+
+	public CrossCorrelation getCrossAB() {
+		return crossAB;
+	}
+	public void setCrossAB(CrossCorrelation crossAB) {
+		this.crossAB = crossAB;
+	}
+	public CrossCorrelation getCrossBC() {
+		return crossBC;
+	}
+	public void setCrossBC(CrossCorrelation crossBC) {
+		this.crossBC = crossBC;
+	}
+	public CrossCorrelation getCrossDF() {
+		return crossDF;
+	}
+	public void setCrossDF(CrossCorrelation crossDF) {
+		this.crossDF = crossDF;
+	}
+	public CrossCorrelation getCrossFD() {
+		return crossFD;
+	}
+	public void setCrossFD(CrossCorrelation crossFD) {
+		this.crossFD = crossFD;
+	}
 	public CrossCorrelation getCrossBA() {
 		return crossBA;
 	}
 	public void setCrossBA(CrossCorrelation crossBA) {
 		this.crossBA = crossBA;
 	}
-	public CrossCorrelation getCrossAC() {
-		return crossAC;
+	public CrossCorrelation getCrossCB() {
+		return crossCB;
 	}
-	public void setCrossAC(CrossCorrelation crossAC) {
-		this.crossAC = crossAC;
+	public void setCrossCB(CrossCorrelation crossCB) {
+		this.crossCB = crossCB;
+	}
+	
+	public double[] getSumCrossAB() {
+		return sumCrossAB;
+	}
+	public void setSumCrossAB(double[] sumCrossAB) {
+		this.sumCrossAB = sumCrossAB;
+	}
+	public double[] getSumCrossDF() {
+		return sumCrossDF;
+	}
+	public void setSumCrossDF(double[] sumCrossDF) {
+		this.sumCrossDF = sumCrossDF;
+	}
+	public double[] getSumCrossBC() {
+		return sumCrossBC;
+	}
+	public void setSumCrossBC(double[] sumCrossBC) {
+		this.sumCrossBC = sumCrossBC;
 	}
 	/**
      * Computes the cross correlation between sequences a and b.
